@@ -1,0 +1,147 @@
+/* ===== Preview Panel ===== */
+#preview-panel {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 24px 40px;
+  background: var(--preview-bg);
+  color: var(--preview-fg);
+}
+
+#preview-content {
+  max-width: 860px;
+  margin: 0 auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Headings */
+#preview-content h1,
+#preview-content h2,
+#preview-content h3,
+#preview-content h4,
+#preview-content h5,
+#preview-content h6 {
+  margin-top: 1.4em;
+  margin-bottom: 0.6em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--preview-fg);
+}
+#preview-content h1 { font-size: 2em; border-bottom: 1px solid var(--preview-heading-border); padding-bottom: 0.3em; }
+#preview-content h2 { font-size: 1.5em; border-bottom: 1px solid var(--preview-heading-border); padding-bottom: 0.3em; }
+#preview-content h3 { font-size: 1.25em; }
+#preview-content h4 { font-size: 1.1em; }
+#preview-content h5 { font-size: 1em; }
+
+/* Paragraph */
+#preview-content p {
+  margin: 0.8em 0;
+}
+
+/* Links */
+#preview-content a {
+  color: var(--preview-link);
+  text-decoration: none;
+}
+#preview-content a:hover {
+  text-decoration: underline;
+}
+
+/* Bold & Italic */
+#preview-content strong { font-weight: 600; }
+#preview-content em { font-style: italic; }
+#preview-content del { text-decoration: line-through; opacity: 0.7; }
+
+/* Inline code */
+#preview-content code {
+  background: var(--preview-code-bg);
+  color: var(--preview-code-fg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-size: 0.9em;
+}
+
+/* Code blocks */
+#preview-content pre {
+  margin: 1em 0;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  background: var(--preview-code-bg);
+  border: 1px solid var(--border-color);
+}
+#preview-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+/* Blockquote */
+#preview-content blockquote {
+  margin: 1em 0;
+  padding: 12px 20px;
+  border-left: 4px solid var(--preview-blockquote-border);
+  background: var(--preview-blockquote-bg);
+  border-radius: 0 4px 4px 0;
+  color: var(--fg-dim);
+}
+#preview-content blockquote p {
+  margin: 0.4em 0;
+}
+
+/* Lists */
+#preview-content ul,
+#preview-content ol {
+  margin: 0.8em 0;
+  padding-left: 2em;
+}
+#preview-content li {
+  margin: 0.3em 0;
+}
+#preview-content li > ul,
+#preview-content li > ol {
+  margin: 0.2em 0;
+}
+
+/* Table */
+#preview-content table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  border: 1px solid var(--preview-table-border);
+}
+#preview-content th,
+#preview-content td {
+  padding: 8px 12px;
+  border: 1px solid var(--preview-table-border);
+  text-align: left;
+}
+#preview-content th {
+  font-weight: 600;
+  background: var(--preview-code-bg);
+}
+
+/* Horizontal rule */
+#preview-content hr {
+  margin: 1.5em 0;
+  border: none;
+  height: 1px;
+  background: var(--preview-hr);
+}
+
+/* Images */
+#preview-content img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+/* Checkbox lists (GFM) */
+#preview-content input[type="checkbox"] {
+  margin-right: 6px;
+  accent-color: var(--accent);
+}

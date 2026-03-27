@@ -1,0 +1,26 @@
+# Rust / Cargo
+src-tauri/target/
+**/*.rs.bk
+
+# Node
+node_modules/
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build artifacts
+*.exe
+*.msi
+*.nsis
+
+# Temp files
+rebuild.bat

@@ -1,0 +1,176 @@
+/* ===== Theme CSS Variables ===== */
+
+/* Dark theme */
+.theme-dark {
+  --bg: #1e1e1e;
+  --fg: #d4d4d4;
+  --fg-dim: #808080;
+  --border-color: #333;
+  --accent: #0078d4;
+  --hover-bg: rgba(255,255,255,0.08);
+  --input-bg: #2d2d2d;
+
+  --titlebar-bg: #252526;
+  --titlebar-fg: #cccccc;
+  --menu-hover-bg: rgba(255,255,255,0.1);
+  --dropdown-bg: #2d2d2d;
+
+  --sidebar-bg: #252526;
+  --sidebar-fg: #cccccc;
+  --sidebar-header-bg: #333333;
+  --tree-hover-bg: rgba(255,255,255,0.06);
+  --tree-selected-bg: #094771;
+
+  --editor-bg: #1e1e1e;
+  --editor-fg: #d4d4d4;
+  --editor-selection: #264f78;
+  --linenum-bg: #1e1e1e;
+  --linenum-fg: #858585;
+  --linenum-active-fg: #c6c6c6;
+  --toolbar-bg: #252526;
+  --toolbar-border: #333;
+
+  --preview-bg: #1e1e1e;
+  --preview-fg: #d4d4d4;
+  --preview-heading-border: #444;
+  --preview-code-bg: #2d2d2d;
+  --preview-code-fg: #ce9178;
+  --preview-blockquote-border: #0078d4;
+  --preview-blockquote-bg: rgba(0,120,212,0.08);
+  --preview-link: #4fc1ff;
+  --preview-table-border: #444;
+  --preview-hr: #444;
+
+  --statusbar-bg: #007acc;
+  --statusbar-fg: #ffffff;
+
+  --scrollbar-thumb: #424242;
+  --scrollbar-thumb-hover: #555;
+
+  /* Syntax highlighting */
+  --syn-heading: #569cd6;
+  --syn-bold: #d7ba7d;
+  --syn-italic: #c586c0;
+  --syn-code: #ce9178;
+  --syn-link: #4fc1ff;
+  --syn-list: #b5cea8;
+  --syn-quote: #6a9955;
+  --syn-hr: #808080;
+  --syn-fence: #808080;
+}
+
+/* Light theme */
+.theme-light {
+  --bg: #ffffff;
+  --fg: #333333;
+  --fg-dim: #999999;
+  --border-color: #e0e0e0;
+  --accent: #0078d4;
+  --hover-bg: rgba(0,0,0,0.05);
+  --input-bg: #f5f5f5;
+
+  --titlebar-bg: #f3f3f3;
+  --titlebar-fg: #333333;
+  --menu-hover-bg: rgba(0,0,0,0.06);
+  --dropdown-bg: #ffffff;
+
+  --sidebar-bg: #f3f3f3;
+  --sidebar-fg: #333333;
+  --sidebar-header-bg: #e8e8e8;
+  --tree-hover-bg: rgba(0,0,0,0.04);
+  --tree-selected-bg: #cce5ff;
+
+  --editor-bg: #ffffff;
+  --editor-fg: #333333;
+  --editor-selection: #add6ff;
+  --linenum-bg: #f7f7f7;
+  --linenum-fg: #999999;
+  --linenum-active-fg: #333333;
+  --toolbar-bg: #f3f3f3;
+  --toolbar-border: #e0e0e0;
+
+  --preview-bg: #ffffff;
+  --preview-fg: #333333;
+  --preview-heading-border: #e0e0e0;
+  --preview-code-bg: #f5f5f5;
+  --preview-code-fg: #c7254e;
+  --preview-blockquote-border: #0078d4;
+  --preview-blockquote-bg: rgba(0,120,212,0.05);
+  --preview-link: #0366d6;
+  --preview-table-border: #e0e0e0;
+  --preview-hr: #e0e0e0;
+
+  --statusbar-bg: #007acc;
+  --statusbar-fg: #ffffff;
+
+  --scrollbar-thumb: #c1c1c1;
+  --scrollbar-thumb-hover: #999;
+
+  --syn-heading: #0000ff;
+  --syn-bold: #795e26;
+  --syn-italic: #af00db;
+  --syn-code: #a31515;
+  --syn-link: #0366d6;
+  --syn-list: #098658;
+  --syn-quote: #008000;
+  --syn-hr: #999999;
+  --syn-fence: #999999;
+}
+
+/* Sepia / Eye-care theme */
+.theme-sepia {
+  --bg: #f5f0e8;
+  --fg: #5b4636;
+  --fg-dim: #9c8b7a;
+  --border-color: #d4c8b8;
+  --accent: #8b6914;
+  --hover-bg: rgba(139,105,20,0.08);
+  --input-bg: #ebe4d8;
+
+  --titlebar-bg: #ebe4d8;
+  --titlebar-fg: #5b4636;
+  --menu-hover-bg: rgba(139,105,20,0.1);
+  --dropdown-bg: #f5f0e8;
+
+  --sidebar-bg: #ebe4d8;
+  --sidebar-fg: #5b4636;
+  --sidebar-header-bg: #ddd4c4;
+  --tree-hover-bg: rgba(139,105,20,0.06);
+  --tree-selected-bg: #d4c49a;
+
+  --editor-bg: #f5f0e8;
+  --editor-fg: #5b4636;
+  --editor-selection: #d4c49a;
+  --linenum-bg: #ede7dc;
+  --linenum-fg: #b0a090;
+  --linenum-active-fg: #5b4636;
+  --toolbar-bg: #ebe4d8;
+  --toolbar-border: #d4c8b8;
+
+  --preview-bg: #f5f0e8;
+  --preview-fg: #5b4636;
+  --preview-heading-border: #d4c8b8;
+  --preview-code-bg: #ebe4d8;
+  --preview-code-fg: #9c4500;
+  --preview-blockquote-border: #8b6914;
+  --preview-blockquote-bg: rgba(139,105,20,0.06);
+  --preview-link: #8b6914;
+  --preview-table-border: #d4c8b8;
+  --preview-hr: #d4c8b8;
+
+  --statusbar-bg: #8b6914;
+  --statusbar-fg: #ffffff;
+
+  --scrollbar-thumb: #c4b8a4;
+  --scrollbar-thumb-hover: #a89880;
+
+  --syn-heading: #8b6914;
+  --syn-bold: #9c4500;
+  --syn-italic: #8b008b;
+  --syn-code: #9c4500;
+  --syn-link: #8b6914;
+  --syn-list: #2e7d32;
+  --syn-quote: #558b2f;
+  --syn-hr: #b0a090;
+  --syn-fence: #b0a090;
+}

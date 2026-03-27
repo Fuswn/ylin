@@ -1,0 +1,3 @@
+@echo off
+echo Launching Markdown Editor...
+start "" "%~dp0src-tauri\target\release\markdown-editor.exe"
