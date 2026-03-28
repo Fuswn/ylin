@@ -55,28 +55,94 @@ async fn dialog_save_html(default_name: String) -> Option<String> {
 
 // ---- File system commands ----
 
-/// Write HTML to a temp file and open it in the default browser (for PDF printing)
+/// Save PDF dialog
 #[tauri::command]
-fn open_html_in_browser(html: String) -> Result<String, String> {
-    let tmp_dir = std::env::temp_dir();
-    let tmp_path = tmp_dir.join("md_editor_preview.html");
-    fs::write(&tmp_path, &html).map_err(|e| format!("Failed to write temp file: {}", e))?;
-    let path_str = tmp_path.to_string_lossy().to_string();
+async fn dialog_save_pdf(default_name: String) -> Option<String> {
+    let mut dlg = AsyncFileDialog::new()
+        .set_title("导出 PDF")
+        .add_filter("PDF", &["pdf"]);
+    if !default_name.is_empty() {
+        dlg = dlg.set_file_name(&default_name);
+    }
+    let file = dlg.save_file().await?;
+    Some(file.path().to_string_lossy().to_string())
+}
+
+/// Find a Chromium-based browser for headless PDF generation
+fn find_browser() -> Option<String> {
     #[cfg(target_os = "windows")]
     {
-        std::process::Command::new("cmd")
-            .args(["/c", "start", "", &path_str])
-            .spawn()
-            .map_err(|e| format!("Failed to open browser: {}", e))?;
+        let paths = [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        ];
+        for p in &paths {
+            if Path::new(p).exists() {
+                return Some(p.to_string());
+            }
+        }
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
     {
-        std::process::Command::new("xdg-open")
-            .arg(&path_str)
-            .spawn()
-            .map_err(|e| format!("Failed to open browser: {}", e))?;
+        let paths = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+        ];
+        for p in &paths {
+            if Path::new(p).exists() {
+                return Some(p.to_string());
+            }
+        }
     }
-    Ok(path_str)
+    #[cfg(target_os = "linux")]
+    {
+        let names = ["google-chrome", "chromium-browser", "chromium", "microsoft-edge"];
+        for name in &names {
+            if std::process::Command::new("which").arg(name).output()
+                .map(|o| o.status.success()).unwrap_or(false) {
+                return Some(name.to_string());
+            }
+        }
+    }
+    None
+}
+
+/// Export HTML to PDF using headless Chromium (Edge/Chrome)
+#[tauri::command]
+fn export_pdf(html: String, output_path: String) -> Result<(), String> {
+    let browser = find_browser()
+        .ok_or("未找到 Edge 或 Chrome 浏览器，无法导出 PDF")?;
+
+    // Write HTML to temp file
+    let tmp_dir = std::env::temp_dir();
+    let tmp_html = tmp_dir.join("ylin_export_temp.html");
+    fs::write(&tmp_html, html.as_bytes())
+        .map_err(|e| format!("写入临时文件失败: {}", e))?;
+
+    let input_url = format!("file:///{}", tmp_html.to_string_lossy().replace('\\', "/"));
+
+    // Run headless browser to generate PDF
+    let result = std::process::Command::new(&browser)
+        .arg("--headless")
+        .arg("--disable-gpu")
+        .arg("--no-pdf-header-footer")
+        .arg(format!("--print-to-pdf={}", output_path))
+        .arg(&input_url)
+        .output()
+        .map_err(|e| format!("启动浏览器失败: {}", e))?;
+
+    // Clean up temp file
+    let _ = fs::remove_file(&tmp_html);
+
+    // Check if PDF was actually created
+    if Path::new(&output_path).exists() {
+        Ok(())
+    } else {
+        let stderr = String::from_utf8_lossy(&result.stderr);
+        Err(format!("PDF 生成失败: {}", stderr))
+    }
 }
 
 #[tauri::command]
@@ -145,7 +211,8 @@ pub fn run() {
             dialog_open_folder,
             dialog_save_md,
             dialog_save_html,
-            open_html_in_browser,
+            dialog_save_pdf,
+            export_pdf,
             read_dir_tree,
             read_md_file,
             write_md_file,

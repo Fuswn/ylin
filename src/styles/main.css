@@ -206,3 +206,44 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
 }
+
+/* ===== Print Styles ===== */
+@media print {
+  /* Hide all UI chrome */
+  #titlebar, #statusbar, #sidebar, #resize-handle,
+  #md-toolbar, #editor-panel {
+    display: none !important;
+  }
+  /* Reset layout */
+  html, body {
+    height: auto;
+    overflow: visible;
+    background: #fff;
+    color: #333;
+  }
+  body { display: block; }
+  #main-container {
+    display: block;
+    overflow: visible;
+  }
+  #editor-area {
+    display: block;
+    overflow: visible;
+  }
+  #panels-container {
+    display: block;
+    overflow: visible;
+  }
+  /* Show preview panel full width */
+  #preview-panel {
+    display: block !important;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
+  }
+  #preview-content {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+}

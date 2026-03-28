@@ -162,13 +162,18 @@ const App = {
       return;
     }
     try {
-      // Generate HTML with print-friendly styles, open in system browser for Ctrl+P → Save as PDF
-      const html = Preview.getFullHtml(content);
-      const tmpPath = await window.__TAURI__.core.invoke('open_html_in_browser', { html });
-      document.getElementById('status-file').textContent = '已在浏览器中打开，请按 Ctrl+P 打印为 PDF';
+      const defaultName = this._currentFile
+        ? this._fileName(this._currentFile).replace(/\.(md|markdown)$/i, '.pdf')
+        : 'export.pdf';
+      const path = await window.__TAURI__.core.invoke('dialog_save_pdf', { defaultName });
+      if (path) {
+        const html = Preview.getFullHtml(content);
+        await window.__TAURI__.core.invoke('export_pdf', { html, outputPath: path });
+        document.getElementById('status-file').textContent = `已导出: ${this._fileName(path)}`;
+      }
     } catch (err) {
       console.error('Export PDF failed:', err);
-      alert('导出 PDF 失败: ' + JSON.stringify(err));
+      alert('导出 PDF 失败: ' + err);
     }
   },
 
