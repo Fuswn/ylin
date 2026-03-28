@@ -1,5 +1,5 @@
 {
-  "name": "markdown-editor-tauri",
+  "name": "ylin",
   "version": "1.0.0",
   "description": "A fast, lightweight Markdown editor built with Tauri 2 + Rust",
   "scripts": {
@@ -8,8 +8,8 @@
     "build": "tauri build"
   },
   "keywords": ["markdown", "editor", "tauri", "rust"],
-  "author": "Chengdu Zhijian Cloud Technology Co., Ltd.",
-  "license": "Apache-2.0",
+  "author": "Fusw",
+  "license": "MIT",
   "dependencies": {
     "@tauri-apps/api": "^2.10.1",
     "@tauri-apps/cli": "^2.10.1"

@@ -1,10 +1,10 @@
 [package]
-name = "markdown-editor"
+name = "ylin"
 version = "1.0.0"
-description = "A fast, lightweight Markdown editor"
-authors = ["Chengdu Zhijian Cloud Technology Co., Ltd."]
-license = "Apache-2.0"
-repository = ""
+description = "A fast, lightweight Markdown editor built with Tauri 2 + Rust"
+authors = ["Fusw"]
+license = "MIT"
+repository = "https://github.com/Fuswn/ylin"
 edition = "2021"
 rust-version = "1.77.2"
 

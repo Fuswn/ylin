@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Markdown编辑器",
+  "productName": "ylin",
   "version": "1.0.0",
-  "identifier": "com.zhijianyun.markdown-editor",
+  "identifier": "com.ylin.editor",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +10,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Markdown 编辑器",
+        "title": "ylin",
         "width": 1280,
         "height": 800,
         "minWidth": 800,

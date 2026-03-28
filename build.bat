@@ -1,6 +1,6 @@
 @echo off
 echo ============================================
-echo    Markdown Editor - Tauri Build Script
+echo    ylin - Tauri Build Script
 echo ============================================
 echo.
 
@@ -19,7 +19,7 @@ if %errorlevel% equ 0 (
     echo.
     echo ============================================
     echo   Build Successful!
-    echo   EXE: src-tauri\target\release\markdown-editor.exe
+    echo   EXE: src-tauri\target\release\ylin.exe
     echo ============================================
 ) else (
     echo.

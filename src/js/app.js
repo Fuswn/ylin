@@ -231,7 +231,7 @@ const App = {
     const titleEl = document.getElementById('title-text');
     const dirty = Editor.isDirty() ? ' ●' : '';
     const name = this._currentFile ? this._fileName(this._currentFile) : '未命名';
-    titleEl.textContent = `${name}${dirty} - Markdown 编辑器`;
+    titleEl.textContent = `${name}${dirty} - ylin`;
   },
 
   _fileName(path) {
@@ -264,7 +264,7 @@ const App = {
             this._toggleReadingMode(toggle.checked);
             break;
           case 'about':
-            alert('Markdown 编辑器 v1.0.0\n\n基于 Tauri 2 + Rust 构建\n成都指尖云科技有限公司');
+            alert('ylin v1.0.0\n\n轻量级 Markdown 编辑器\n基于 Tauri 2 + Rust 构建\nhttps://github.com/Fuswn/ylin');
             break;
         }
       });
