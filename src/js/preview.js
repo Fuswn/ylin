@@ -1,5 +1,6 @@
 /**
  * preview.js - Markdown preview renderer
+ * @author Fusw
  */
 const Preview = {
   container: null,

@@ -1,5 +1,6 @@
 /**
  * themes.js - Theme management module
+ * @author Fusw
  */
 const ThemeManager = {
   STORAGE_KEY: 'md-editor-theme',

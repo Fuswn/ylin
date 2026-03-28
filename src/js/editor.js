@@ -1,5 +1,6 @@
 /**
  * editor.js - Editor module with line numbers, syntax highlighting & keyboard shortcuts
+ * @author Fusw
  */
 const Editor = {
   textarea: null,

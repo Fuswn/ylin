@@ -1,3 +1,6 @@
+// file_ops.rs - File system operations and directory traversal
+// @author Fusw
+
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;

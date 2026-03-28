@@ -1,3 +1,6 @@
+// lib.rs - Tauri application builder and command handlers
+// @author Fusw
+
 mod file_ops;
 
 use file_ops::{read_dir_one_level, FileNode};

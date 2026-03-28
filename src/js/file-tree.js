@@ -1,6 +1,7 @@
 /**
  * file-tree.js - Lazy-loading file tree sidebar
  * Only loads one directory level at a time; expands on click.
+ * @author Fusw
  */
 const FileTree = {
   container: null,

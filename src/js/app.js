@@ -1,5 +1,6 @@
 /**
  * app.js - Main application controller
+ * @author Fusw
  */
 const App = {
   _currentFile: null,

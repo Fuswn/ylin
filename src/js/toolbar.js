@@ -1,5 +1,6 @@
 /**
  * toolbar.js - Markdown formatting toolbar actions
+ * @author Fusw
  */
 const Toolbar = {
   init() {
