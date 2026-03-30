@@ -15,8 +15,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 8px;
+  height: 38px;
+  padding: 0 10px;
   background: var(--sidebar-header-bg);
   border-bottom: 1px solid var(--border-color);
   flex-shrink: 0;
@@ -25,14 +25,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   background: transparent;
   color: var(--fg-dim);
   flex-shrink: 0;
+  transition: all 0.12s;
 }
 #sidebar-header button:hover {
   background: var(--hover-bg);
@@ -60,14 +61,15 @@
 .tree-item {
   display: flex;
   align-items: center;
-  padding: 3px 8px;
+  padding: 4px 10px;
   cursor: pointer;
   font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  border-radius: 0;
-  transition: background 0.1s;
+  border-radius: 4px;
+  margin: 1px 4px;
+  transition: background 0.12s;
 }
 .tree-item:hover {
   background: var(--tree-hover-bg);
@@ -117,11 +119,12 @@
 .drive-item {
   display: flex;
   align-items: center;
-  padding: 6px 10px;
+  padding: 7px 12px;
   cursor: pointer;
   font-size: 13px;
-  border-radius: 4px;
+  border-radius: 6px;
   margin-bottom: 2px;
+  transition: background 0.12s;
 }
 .drive-item:hover {
   background: var(--tree-hover-bg);

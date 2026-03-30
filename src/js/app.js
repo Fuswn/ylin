@@ -14,6 +14,12 @@ const App = {
       document.getElementById('status-file').textContent = 'ERROR: Tauri API 未加载';
     } else {
       console.log('[OK] Tauri API loaded:', Object.keys(window.__TAURI__));
+      if (window.__TAURI__.webviewWindow) {
+        console.log('[OK] webviewWindow keys:', Object.keys(window.__TAURI__.webviewWindow));
+      }
+      if (window.__TAURI__.event) {
+        console.log('[OK] event keys:', Object.keys(window.__TAURI__.event));
+      }
     }
 
     // Init all modules
@@ -352,28 +358,63 @@ const App = {
   },
 
   _initDragDrop() {
-    document.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+    const overlay = document.getElementById('drag-overlay');
+    const tauriEvent = window.__TAURI__?.event;
+
+    if (!tauriEvent) {
+      console.warn('[DragDrop] window.__TAURI__.event not available');
+      return;
+    }
+
+    // Use Tauri event.listen for drag-drop events
+    // Tauri 2 intercepts native drag-drop, standard HTML5 events won't fire
+    tauriEvent.listen('tauri://drag-enter', () => {
+      overlay.classList.remove('hidden');
     });
 
-    document.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const files = e.dataTransfer?.files;
-      if (files && files.length > 0) {
-        const file = files[0];
-        if (file.name.match(/\.(md|markdown)$/i)) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            Editor.setValue(ev.target.result, true);
-            this._currentFile = null;
-            this._updateTitle();
-          };
-          reader.readAsText(file);
+    tauriEvent.listen('tauri://drag-over', () => {
+      // Keep overlay visible
+      overlay.classList.remove('hidden');
+    });
+
+    tauriEvent.listen('tauri://drag-leave', () => {
+      overlay.classList.add('hidden');
+    });
+
+    tauriEvent.listen('tauri://drag-drop', (event) => {
+      overlay.classList.add('hidden');
+      console.log('[DragDrop] drop event:', JSON.stringify(event.payload));
+      const paths = event.payload?.paths;
+      if (paths && paths.length > 0) {
+        const filePath = paths[0];
+        if (filePath.match(/\.(md|markdown)$/i)) {
+          this._loadFile(filePath);
         }
       }
     });
+
+    // Also try the alternative event name format
+    tauriEvent.listen('tauri://file-drop', (event) => {
+      overlay.classList.add('hidden');
+      console.log('[DragDrop] file-drop event:', JSON.stringify(event.payload));
+      const paths = event.payload?.paths || event.payload;
+      if (Array.isArray(paths) && paths.length > 0) {
+        const filePath = paths[0];
+        if (filePath.match(/\.(md|markdown)$/i)) {
+          this._loadFile(filePath);
+        }
+      }
+    });
+
+    tauriEvent.listen('tauri://file-drop-hover', () => {
+      overlay.classList.remove('hidden');
+    });
+
+    tauriEvent.listen('tauri://file-drop-cancelled', () => {
+      overlay.classList.add('hidden');
+    });
+
+    console.log('[DragDrop] All drag-drop listeners registered');
   },
 };
 
