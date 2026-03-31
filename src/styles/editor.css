@@ -1,3 +1,62 @@
+/* ===== Search Bar ===== */
+#search-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+#search-input {
+  width: 220px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--editor-bg);
+  color: var(--editor-fg);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+#search-input:focus {
+  border-color: var(--accent);
+}
+#search-count {
+  font-size: 12px;
+  color: var(--fg-dim);
+  min-width: 60px;
+  text-align: center;
+}
+#search-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg-dim);
+  cursor: pointer;
+}
+#search-bar button:hover {
+  background: var(--hover-bg);
+  color: var(--fg);
+}
+
+/* Search highlights in preview */
+mark.search-highlight {
+  background: rgba(255, 200, 0, 0.3);
+  color: inherit;
+  border-radius: 2px;
+}
+mark.search-current {
+  background: rgba(255, 150, 0, 0.7);
+  color: inherit;
+  border-radius: 2px;
+}
+
 /* ===== Editor Panel ===== */
 #editor-panel {
   flex: 1;

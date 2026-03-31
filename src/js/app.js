@@ -55,6 +55,9 @@ const App = {
     // Sidebar resize
     this._initResizeHandle();
 
+    // Search bar
+    this._initSearch();
+
     // Close menu dropdowns on outside click
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.menu-item')) {
@@ -237,6 +240,192 @@ const App = {
     }
   },
 
+  // ---- Search ----
+  //
+  // Architecture:
+  //   _findMatches()     – scans text for matches, stores positions, shows count
+  //   _doSearch(dir)     – moves _searchIndex forward/backward
+  //   _navigateToMatch() – renders highlight + scrolls (mode-specific rendering)
+  //
+  // Edit mode  → searches raw markdown, highlights via textarea selection
+  // Reading mode → searches preview textContent, highlights via <mark> tags
+  // Match-finding and navigation logic is shared; only rendering differs.
+
+  _searchIndex: -1,
+  _searchMatches: [],    // edit mode: char offsets; reading mode: {node, start, length}
+
+  _openSearch() {
+    const bar = document.getElementById('search-bar');
+    const input = document.getElementById('search-input');
+    bar.classList.remove('hidden');
+    input.focus();
+    input.select();
+  },
+
+  _closeSearch() {
+    document.getElementById('search-bar').classList.add('hidden');
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-count').textContent = '';
+    this._searchMatches = [];
+    this._searchIndex = -1;
+    if (this._isReadingMode) {
+      Preview.render(Editor.getValue());
+    }
+    Editor.focus();
+  },
+
+  // Scan for matches based on current mode, show count (does NOT move index)
+  _findMatches() {
+    const query = document.getElementById('search-input').value;
+    const countEl = document.getElementById('search-count');
+    this._searchIndex = -1;
+
+    if (!query) {
+      countEl.textContent = '';
+      this._searchMatches = [];
+      if (this._isReadingMode) Preview.render(Editor.getValue());
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+
+    if (this._isReadingMode) {
+      // Search within rendered preview DOM text nodes
+      Preview.render(Editor.getValue());
+      const preview = document.getElementById('preview-content');
+      const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
+      this._searchMatches = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        const lowerText = node.textContent.toLowerCase();
+        let idx = 0;
+        while ((idx = lowerText.indexOf(lowerQuery, idx)) !== -1) {
+          this._searchMatches.push({ node, start: idx, length: query.length });
+          idx += 1;
+        }
+      }
+    } else {
+      // Search within raw markdown text
+      const text = Editor.getValue();
+      const lowerText = text.toLowerCase();
+      this._searchMatches = [];
+      let pos = 0;
+      while (true) {
+        const idx = lowerText.indexOf(lowerQuery, pos);
+        if (idx === -1) break;
+        this._searchMatches.push(idx);
+        pos = idx + 1;
+      }
+    }
+
+    countEl.textContent = this._searchMatches.length === 0
+      ? '无结果'
+      : `${this._searchMatches.length} 个匹配`;
+  },
+
+  // Move index in given direction and update count display
+  _doSearch(direction) {
+    if (this._searchMatches.length === 0) return;
+
+    if (direction === 'next') {
+      this._searchIndex++;
+      if (this._searchIndex >= this._searchMatches.length) this._searchIndex = 0;
+    } else {
+      this._searchIndex--;
+      if (this._searchIndex < 0) this._searchIndex = this._searchMatches.length - 1;
+    }
+
+    document.getElementById('search-count').textContent =
+      `${this._searchIndex + 1} / ${this._searchMatches.length}`;
+  },
+
+  // Render highlight and scroll to current match (mode-specific rendering)
+  _navigateToMatch() {
+    if (this._searchMatches.length === 0 || this._searchIndex < 0) return;
+    const query = document.getElementById('search-input').value;
+
+    if (this._isReadingMode) {
+      // Re-render to clear old <mark> tags, then re-find nodes
+      // (needed because previous highlights altered the DOM)
+      Preview.render(Editor.getValue());
+      const preview = document.getElementById('preview-content');
+      const lowerQuery = query.toLowerCase();
+      const walker = document.createTreeWalker(preview, NodeFilter.SHOW_TEXT);
+      const matches = [];
+      let node;
+      while ((node = walker.nextNode())) {
+        const lowerText = node.textContent.toLowerCase();
+        let idx = 0;
+        while ((idx = lowerText.indexOf(lowerQuery, idx)) !== -1) {
+          matches.push({ node, start: idx, length: query.length });
+          idx += 1;
+        }
+      }
+
+      if (matches.length === 0) return;
+      const currentIdx = this._searchIndex % matches.length;
+
+      // Wrap matches in <mark> tags (reverse order to preserve offsets)
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const { node: textNode, start, length } = matches[i];
+        const range = document.createRange();
+        range.setStart(textNode, start);
+        range.setEnd(textNode, start + length);
+        const mark = document.createElement('mark');
+        mark.className = i === currentIdx ? 'search-current' : 'search-highlight';
+        range.surroundContents(mark);
+      }
+
+      const currentMark = preview.querySelector('.search-current');
+      if (currentMark) {
+        currentMark.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    } else {
+      // Edit mode: select in textarea and scroll
+      const matchPos = this._searchMatches[this._searchIndex];
+      const ta = Editor.textarea;
+      const textBefore = ta.value.substring(0, matchPos);
+      const lineNum = textBefore.split('\n').length - 1;
+      const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 22.4;
+      ta.scrollTop = Math.max(0, lineNum * lineHeight - ta.clientHeight / 3);
+      Editor._syncScroll();
+      ta.focus();
+      ta.setSelectionRange(matchPos, matchPos + query.length);
+    }
+  },
+
+  _initSearch() {
+    const input = document.getElementById('search-input');
+    const closeBtn = document.getElementById('search-close');
+    const prevBtn = document.getElementById('search-prev');
+    const nextBtn = document.getElementById('search-next');
+
+    // Typing: find matches and show count only
+    input.addEventListener('input', () => {
+      this._findMatches();
+    });
+
+    // Enter: navigate to next match
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this._doSearch('next');
+        this._navigateToMatch();
+      } else if (e.key === 'Enter' && e.shiftKey) {
+        e.preventDefault();
+        this._doSearch('prev');
+        this._navigateToMatch();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this._closeSearch();
+      }
+    });
+
+    closeBtn.addEventListener('click', () => this._closeSearch());
+    prevBtn.addEventListener('click', () => { this._doSearch('prev'); this._navigateToMatch(); });
+    nextBtn.addEventListener('click', () => { this._doSearch('next'); this._navigateToMatch(); });
+  },
+
   // ---- Helpers ----
 
   _updateTitle() {
@@ -286,6 +475,35 @@ const App = {
   _bindKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
+
+      // Ctrl+F: open search bar (always works)
+      if (ctrl && e.key === 'f') {
+        e.preventDefault();
+        this._openSearch();
+        return;
+      }
+
+      // Skip other shortcuts when search input is focused
+      if (e.target.id === 'search-input') return;
+
+      // F3 / Shift+F3: navigate search matches from editor
+      if (e.key === 'F3' && !document.getElementById('search-bar').classList.contains('hidden')) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          this._doSearch('prev');
+        } else {
+          this._doSearch('next');
+        }
+        this._navigateToMatch();
+        return;
+      }
+
+      // Escape: close search bar from editor
+      if (e.key === 'Escape' && !document.getElementById('search-bar').classList.contains('hidden')) {
+        e.preventDefault();
+        this._closeSearch();
+        return;
+      }
 
       if (ctrl && e.key === 'n') {
         e.preventDefault();
@@ -359,31 +577,52 @@ const App = {
 
   _initDragDrop() {
     const overlay = document.getElementById('drag-overlay');
-    const tauriEvent = window.__TAURI__?.event;
 
-    if (!tauriEvent) {
-      console.warn('[DragDrop] window.__TAURI__.event not available');
+    // Use Tauri 2 webviewWindow.onDragDropEvent API
+    const webviewWindow = window.__TAURI__?.webviewWindow;
+    if (webviewWindow) {
+      const appWindow = webviewWindow.getCurrentWebviewWindow();
+      appWindow.onDragDropEvent((event) => {
+        const type = event.payload.type;
+        console.log('[DragDrop] event type:', type, JSON.stringify(event.payload));
+
+        if (type === 'enter' || type === 'over') {
+          overlay.classList.remove('hidden');
+        } else if (type === 'leave' || type === 'cancel') {
+          overlay.classList.add('hidden');
+        } else if (type === 'drop') {
+          overlay.classList.add('hidden');
+          const paths = event.payload.paths;
+          if (paths && paths.length > 0) {
+            const filePath = paths[0];
+            if (filePath.match(/\.(md|markdown)$/i)) {
+              this._loadFile(filePath);
+            }
+          }
+        }
+      });
+      console.log('[DragDrop] onDragDropEvent listener registered');
       return;
     }
 
-    // Use Tauri event.listen for drag-drop events
-    // Tauri 2 intercepts native drag-drop, standard HTML5 events won't fire
+    // Fallback: try event.listen with various event names
+    const tauriEvent = window.__TAURI__?.event;
+    if (!tauriEvent) {
+      console.warn('[DragDrop] No drag-drop API available');
+      return;
+    }
+
     tauriEvent.listen('tauri://drag-enter', () => {
       overlay.classList.remove('hidden');
     });
-
     tauriEvent.listen('tauri://drag-over', () => {
-      // Keep overlay visible
       overlay.classList.remove('hidden');
     });
-
     tauriEvent.listen('tauri://drag-leave', () => {
       overlay.classList.add('hidden');
     });
-
     tauriEvent.listen('tauri://drag-drop', (event) => {
       overlay.classList.add('hidden');
-      console.log('[DragDrop] drop event:', JSON.stringify(event.payload));
       const paths = event.payload?.paths;
       if (paths && paths.length > 0) {
         const filePath = paths[0];
@@ -393,28 +632,7 @@ const App = {
       }
     });
 
-    // Also try the alternative event name format
-    tauriEvent.listen('tauri://file-drop', (event) => {
-      overlay.classList.add('hidden');
-      console.log('[DragDrop] file-drop event:', JSON.stringify(event.payload));
-      const paths = event.payload?.paths || event.payload;
-      if (Array.isArray(paths) && paths.length > 0) {
-        const filePath = paths[0];
-        if (filePath.match(/\.(md|markdown)$/i)) {
-          this._loadFile(filePath);
-        }
-      }
-    });
-
-    tauriEvent.listen('tauri://file-drop-hover', () => {
-      overlay.classList.remove('hidden');
-    });
-
-    tauriEvent.listen('tauri://file-drop-cancelled', () => {
-      overlay.classList.add('hidden');
-    });
-
-    console.log('[DragDrop] All drag-drop listeners registered');
+    console.log('[DragDrop] Fallback drag-drop listeners registered');
   },
 };
 
