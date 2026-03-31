@@ -68,6 +68,9 @@ const FileTree = {
   },
 
   _renderNodes(nodes, parentEl, level) {
+    // Clear any placeholder content (e.g. "加载中...")
+    parentEl.innerHTML = '';
+
     if (nodes.length === 0) {
       const empty = document.createElement('div');
       empty.style.cssText = `padding:4px ${8 + level * 16}px;color:var(--fg-dim);font-size:12px;font-style:italic;`;
