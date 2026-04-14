@@ -98,11 +98,16 @@ Rust + Tauri 2.10.3，通过 `#[tauri::command]` 暴露给前端：
 
 全局快捷键在 `_bindKeyboardShortcuts()` 中注册。搜索框聚焦时跳过其他快捷键处理（防止按键冲突）。
 
+## Git Workflow
+
+- **分支模型**: 在 `develop` 分支开发，完成后合并到 `main`。禁止直接在 `main` 上提交代码。
+- **Release 规范**: `gh release create` 的 `--title` 只写版本号（如 `v1.0.2`），不附加描述文字。详细更新内容写在 `--notes` 中。
+
 ## Development
 
 ```bash
-npm run tauri dev    # 开发模式
-npm run tauri build  # 构建安装包（输出到 src-tauri/target/release/bundle/nsis/）
+npm run dev    # 开发模式
+npm run build  # 构建安装包（输出到 src-tauri/target/release/bundle/nsis/）
 ```
 
 ## Known Constraints
