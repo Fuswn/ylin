@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "A fast, lightweight Markdown editor built with Tauri 2 + Rust",
   "scripts": {
-    "tauri": "tauri",
-    "dev": "tauri dev",
-    "build": "tauri build"
+    "tauri": "npx tauri",
+    "dev": "npx tauri dev",
+    "build": "npx tauri build"
   },
   "keywords": ["markdown", "editor", "tauri", "rust"],
   "author": "Fusw",

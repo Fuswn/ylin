@@ -70,6 +70,28 @@ const App = {
 
     // Status
     document.getElementById('status-file').textContent = '就绪';
+
+    // Check if a file was passed via CLI (e.g. double-click .md in Explorer)
+    await this._loadCliFile();
+  },
+
+  async _loadCliFile() {
+    try {
+      const filePath = await window.__TAURI__.core.invoke('get_cli_file_path');
+      if (filePath) {
+        console.log('[CLI] Opening file from args:', filePath);
+        await this._loadFile(filePath);
+
+        // Also open the parent folder in the file tree
+        const parentDir = await window.__TAURI__.core.invoke('get_parent_dir', { path: filePath });
+        if (parentDir) {
+          FileTree.setRoot(parentDir);
+          if (!this._sidebarVisible) this._toggleSidebar();
+        }
+      }
+    } catch (err) {
+      console.error('[CLI] Failed to load file from args:', err);
+    }
   },
 
   // ---- File Operations ----
@@ -216,14 +238,37 @@ const App = {
     const mdToolbar = document.getElementById('md-toolbar');
 
     if (enabled) {
+      // Save editor scroll ratio before hiding
+      const ta = Editor.textarea;
+      const editorScrollMax = ta.scrollHeight - ta.clientHeight;
+      const scrollRatio = editorScrollMax > 0 ? ta.scrollTop / editorScrollMax : 0;
+
       editorPanel.classList.add('hidden');
       previewPanel.classList.remove('hidden');
       mdToolbar.classList.add('hidden');
       Preview.render(Editor.getValue());
+
+      // Restore scroll position in preview-panel (the scrollable container)
+      requestAnimationFrame(() => {
+        const previewScrollMax = previewPanel.scrollHeight - previewPanel.clientHeight;
+        previewPanel.scrollTop = Math.round(scrollRatio * previewScrollMax);
+      });
     } else {
+      // Save preview scroll ratio before hiding (read while still visible)
+      const previewScrollMax = previewPanel.scrollHeight - previewPanel.clientHeight;
+      const scrollRatio = previewScrollMax > 0 ? previewPanel.scrollTop / previewScrollMax : 0;
+
       editorPanel.classList.remove('hidden');
       previewPanel.classList.add('hidden');
       mdToolbar.classList.remove('hidden');
+
+      // Restore scroll position in editor textarea
+      const ta = Editor.textarea;
+      requestAnimationFrame(() => {
+        const editorScrollMax = ta.scrollHeight - ta.clientHeight;
+        ta.scrollTop = Math.round(scrollRatio * editorScrollMax);
+        Editor._syncScroll();
+      });
     }
   },
 

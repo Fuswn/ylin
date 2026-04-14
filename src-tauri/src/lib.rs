@@ -193,6 +193,29 @@ fn get_parent_dir(path: String) -> Option<String> {
         .map(|p| p.to_string_lossy().to_string())
 }
 
+/// Return the file path passed via CLI args (e.g. when double-clicking a .md file)
+#[tauri::command]
+fn get_cli_file_path() -> Option<String> {
+    let args: Vec<String> = std::env::args().collect();
+    // args[0] is the executable, args[1..] are passed arguments
+    for arg in args.iter().skip(1) {
+        // Skip flags
+        if arg.starts_with('-') {
+            continue;
+        }
+        let p = Path::new(arg);
+        if p.exists() && p.is_file() {
+            if let Some(ext) = p.extension() {
+                let ext_lower = ext.to_string_lossy().to_lowercase();
+                if ext_lower == "md" || ext_lower == "markdown" {
+                    return Some(p.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+    None
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -218,6 +241,7 @@ pub fn run() {
             write_md_file,
             get_drives,
             get_parent_dir,
+            get_cli_file_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
