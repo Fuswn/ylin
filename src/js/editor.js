@@ -190,7 +190,7 @@ const Editor = {
     const value = this.textarea.value;
     const lines = value.split('\n').length;
     const chars = value.length;
-    document.getElementById('status-lines').textContent = `行: ${lines}`;
-    document.getElementById('status-chars').textContent = `字符: ${chars}`;
+    document.getElementById('status-lines').textContent = `${lines} 行`;
+    document.getElementById('status-chars').textContent = `${chars} 字符`;
   },
 };

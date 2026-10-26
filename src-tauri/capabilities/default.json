@@ -4,6 +4,10 @@
   "description": "enables the default permissions",
   "windows": ["main"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-theme",
+    "opener:allow-open-url",
+    "opener:allow-default-urls"
   ]
 }

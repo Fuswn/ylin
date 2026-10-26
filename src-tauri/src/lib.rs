@@ -4,9 +4,10 @@
 mod file_ops;
 
 use file_ops::{read_dir_one_level, FileNode};
-use rfd::AsyncFileDialog;
+use rfd::{AsyncFileDialog, AsyncMessageDialog, MessageButtons, MessageDialogResult, MessageLevel};
 use std::fs;
 use std::path::Path;
+use std::sync::Mutex;
 
 // ---- File dialog commands (async to avoid blocking) ----
 
@@ -51,6 +52,36 @@ async fn dialog_save_html(default_name: String) -> Option<String> {
     }
     let file = dlg.save_file().await?;
     Some(file.path().to_string_lossy().to_string())
+}
+
+// ---- Message dialogs ----
+// WKWebView (macOS) ignores window.alert() and makes window.confirm() always return false,
+// so the frontend uses these native dialogs on every platform instead.
+
+#[tauri::command]
+async fn dialog_message(window: tauri::WebviewWindow, message: String) {
+    AsyncMessageDialog::new()
+        .set_parent(&window)
+        .set_title("ylin")
+        .set_description(&message)
+        .set_buttons(MessageButtons::OkCustom("确定".to_string()))
+        .show()
+        .await;
+}
+
+#[tauri::command]
+async fn dialog_confirm(window: tauri::WebviewWindow, message: String) -> bool {
+    let ok = "确定".to_string();
+    let result = AsyncMessageDialog::new()
+        .set_parent(&window)
+        .set_level(MessageLevel::Warning)
+        .set_title("ylin")
+        .set_description(&message)
+        .set_buttons(MessageButtons::OkCancelCustom(ok.clone(), "取消".to_string()))
+        .show()
+        .await;
+    // macOS reports custom buttons by label; Windows falls back to a plain OK/Cancel MessageBox
+    result == MessageDialogResult::Ok || result == MessageDialogResult::Custom(ok)
 }
 
 // ---- File system commands ----
@@ -179,7 +210,27 @@ fn get_drives() -> Vec<String> {
             }
         }
     }
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(target_os = "macos")]
+    {
+        // Home folder, startup disk, then other mounted volumes
+        if let Some(home) = std::env::var_os("HOME") {
+            drives.push(home.to_string_lossy().to_string());
+        }
+        drives.push("/".to_string());
+        if let Ok(entries) = fs::read_dir("/Volumes") {
+            let mut volumes: Vec<String> = entries
+                .filter_map(|e| e.ok())
+                // Skip the "Macintosh HD" symlink to "/". Uses the entry type from /Volumes so
+                // removable volumes aren't touched (that would trigger a privacy prompt).
+                .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+                .filter(|e| !e.file_name().to_string_lossy().starts_with('.'))
+                .map(|e| e.path().to_string_lossy().to_string())
+                .collect();
+            volumes.sort();
+            drives.extend(volumes);
+        }
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
         drives.push("/".to_string());
     }
@@ -193,8 +244,19 @@ fn get_parent_dir(path: String) -> Option<String> {
         .map(|p| p.to_string_lossy().to_string())
 }
 
-/// Return the file path passed via CLI args (e.g. when double-clicking a .md file)
-#[tauri::command]
+// ---- Files opened by the OS (double-click / "Open With") ----
+
+/// File the OS asked us to open that the frontend hasn't loaded yet
+struct PendingFile(Mutex<Option<String>>);
+
+fn is_markdown_file(path: &Path) -> bool {
+    path.is_file()
+        && path.extension().is_some_and(|ext| {
+            ext.eq_ignore_ascii_case("md") || ext.eq_ignore_ascii_case("markdown")
+        })
+}
+
+/// Return the file path passed via CLI args (e.g. when double-clicking a .md file on Windows)
 fn get_cli_file_path() -> Option<String> {
     let args: Vec<String> = std::env::args().collect();
     // args[0] is the executable, args[1..] are passed arguments
@@ -203,22 +265,45 @@ fn get_cli_file_path() -> Option<String> {
         if arg.starts_with('-') {
             continue;
         }
-        let p = Path::new(arg);
-        if p.exists() && p.is_file() {
-            if let Some(ext) = p.extension() {
-                let ext_lower = ext.to_string_lossy().to_lowercase();
-                if ext_lower == "md" || ext_lower == "markdown" {
-                    return Some(p.to_string_lossy().to_string());
-                }
-            }
+        if is_markdown_file(Path::new(arg)) {
+            return Some(arg.clone());
         }
     }
     None
 }
 
+/// macOS hands files opened from Finder to the app as Apple Events instead of CLI args.
+/// They can arrive before the frontend has loaded or while it is running, so queue the
+/// file and notify the frontend, which picks it up via `take_pending_file`.
+#[cfg(target_os = "macos")]
+fn open_from_finder(app: &tauri::AppHandle, urls: Vec<tauri::Url>) {
+    use tauri::{Emitter, Manager};
+
+    let path = urls
+        .iter()
+        .filter_map(|url| url.to_file_path().ok())
+        .find(|path| is_markdown_file(path));
+    if let Some(path) = path {
+        *app.state::<PendingFile>().0.lock().unwrap() = Some(path.to_string_lossy().to_string());
+        let _ = app.emit("open-file", ());
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }
+}
+
+/// Hand the pending file (if any) to the frontend, exactly once
+#[tauri::command]
+fn take_pending_file(state: tauri::State<PendingFile>) -> Option<String> {
+    state.0.lock().unwrap().take()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .manage(PendingFile(Mutex::new(get_cli_file_path())))
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -235,14 +320,25 @@ pub fn run() {
             dialog_save_md,
             dialog_save_html,
             dialog_save_pdf,
+            dialog_message,
+            dialog_confirm,
             export_pdf,
             read_dir_tree,
             read_md_file,
             write_md_file,
             get_drives,
             get_parent_dir,
-            get_cli_file_path,
+            take_pending_file,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(
+            #[allow(unused_variables)]
+            |app_handle, event| {
+                #[cfg(target_os = "macos")]
+                if let tauri::RunEvent::Opened { urls } = event {
+                    open_from_finder(app_handle, urls);
+                }
+            },
+        );
 }

@@ -41,5 +41,10 @@ const ThemeManager = {
     if (hljsLink) {
       hljsLink.href = this.hljsThemes[theme] || this.hljsThemes.dark;
     }
+
+    // Native window chrome follows the theme (Windows title bar, macOS traffic lights & dialogs)
+    window.__TAURI__?.window?.getCurrentWindow()
+      .setTheme(theme === 'dark' ? 'dark' : 'light')
+      .catch(() => {});
   },
 };
