@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ylin</title>
+  <!-- Platform class before first paint (macOS titlebar leaves room for the traffic lights) -->
+  <script>if (/Mac/.test(navigator.platform)) document.documentElement.classList.add('platform-mac');</script>
   <link rel="stylesheet" href="styles/main.css" />
   <link rel="stylesheet" href="styles/themes.css" />
   <link rel="stylesheet" href="styles/editor.css" />
@@ -18,8 +20,8 @@
 </head>
 <body class="theme-dark">
   <!-- Title bar -->
-  <div id="titlebar">
-    <div id="titlebar-left">
+  <div id="titlebar" data-tauri-drag-region>
+    <div id="titlebar-left" data-tauri-drag-region>
       <div id="menu-bar">
         <div class="menu-item" data-menu="file">
           <span>文件</span>
@@ -59,7 +61,7 @@
     <div id="titlebar-center">
       <span id="title-text">ylin</span>
     </div>
-    <div id="titlebar-right">
+    <div id="titlebar-right" data-tauri-drag-region>
       <div id="theme-switcher">
         <button class="theme-btn active" data-theme="dark" title="深色主题">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -71,9 +73,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
-      <label id="reading-mode-label">
+      <label id="reading-mode-label" title="切换阅读模式 (Ctrl+P)">
         <input type="checkbox" id="reading-mode-toggle" />
         <span>阅读模式</span>
+        <span class="switch" aria-hidden="true"></span>
       </label>
     </div>
   </div>
@@ -84,11 +87,11 @@
     <div id="sidebar" class="sidebar">
       <div id="sidebar-header">
         <button id="btn-go-up" title="上级目录">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14 9 9 4 4 9"/><path d="M20 20h-7a4 4 0 0 1-4-4V4"/></svg>
         </button>
         <span id="folder-name">未打开文件夹</span>
         <button id="btn-switch-drive" title="切换驱动器">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
         </button>
       </div>
       <div id="file-tree"></div>
@@ -171,8 +174,8 @@
   <div id="statusbar">
     <span id="status-file">就绪</span>
     <span id="status-right">
-      <span id="status-lines">行: 0</span>
-      <span id="status-chars">字符: 0</span>
+      <span id="status-lines">0 行</span>
+      <span id="status-chars">0 字符</span>
     </span>
   </div>
 
@@ -186,6 +189,36 @@
         <polyline points="9 15 12 12 15 15"/>
       </svg>
       <p>拖放 Markdown 文件到此处</p>
+    </div>
+  </div>
+
+  <!-- About dialog -->
+  <div id="about-overlay" class="hidden">
+    <div id="about-dialog" role="dialog" aria-modal="true" aria-labelledby="about-name">
+      <img id="about-logo" src="assets/logo.png" alt="" width="64" height="64" />
+      <h1 id="about-name">ylin</h1>
+      <p id="about-version"></p>
+      <p id="about-desc">轻量级 Markdown 编辑器<br />基于 Tauri 2 + Rust 构建</p>
+      <div id="about-info">
+        <div class="about-row">
+          <span>作者</span>
+          <span>Fusw</span>
+        </div>
+        <div class="about-row">
+          <span>邮箱</span>
+          <a href="mailto:fusw1116@gmail.com">fusw1116@gmail.com
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+          </a>
+        </div>
+        <div class="about-row">
+          <span>GitHub</span>
+          <a href="https://github.com/Fuswn/ylin">github.com/Fuswn/ylin
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+          </a>
+        </div>
+      </div>
+      <p id="about-copyright">© 2026 Fusw · MIT License</p>
+      <button id="about-close">好</button>
     </div>
   </div>
 

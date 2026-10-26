@@ -2,47 +2,60 @@
 #md-toolbar {
   display: flex;
   align-items: center;
-  padding: 5px 10px;
-  gap: 3px;
+  gap: 2px;
+  height: 40px;
+  padding: 0 12px;
   flex-shrink: 0;
+  overflow-x: auto;
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--toolbar-border);
-  overflow-x: auto;
+}
+#md-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .tb-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 30px;
+  min-width: 28px;
   height: 28px;
-  padding: 0 7px;
+  padding: 0 6px;
   border: none;
   border-radius: 6px;
-  cursor: pointer;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-family: inherit;
   background: transparent;
   color: var(--fg-dim);
-  transition: all 0.15s;
+  transition: background 0.12s, color 0.12s;
   flex-shrink: 0;
+}
+.tb-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.tb-btn b,
+.tb-btn i,
+.tb-btn s {
+  font-size: 13px;
+}
+.tb-btn code {
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 .tb-btn:hover {
   background: var(--hover-bg);
   color: var(--fg);
 }
 .tb-btn:active {
-  transform: scale(0.93);
-  background: var(--hover-bg);
+  background: var(--active-bg);
 }
 
 .tb-sep {
-  display: inline-block;
   width: 1px;
-  height: 18px;
-  margin: 0 5px;
+  height: 16px;
+  margin: 0 6px;
   background: var(--border-color);
-  opacity: 0.6;
   flex-shrink: 0;
 }

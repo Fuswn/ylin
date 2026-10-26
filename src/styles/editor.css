@@ -1,44 +1,64 @@
-/* ===== Search Bar ===== */
+/* ===== Search Bar (floating over the top-right of the editor) ===== */
 #search-bar {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  z-index: 50;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: var(--toolbar-bg);
-  border-bottom: 1px solid var(--border-color);
-  flex-shrink: 0;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--dropdown-bg);
+  border: 1px solid var(--dropdown-border);
+  box-shadow: var(--shadow-lg);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+}
+/* Below the formatting toolbar while it's visible (edit mode) */
+#md-toolbar:not(.hidden) ~ #search-bar {
+  top: 50px;
 }
 #search-input {
   width: 220px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  background: var(--editor-bg);
-  color: var(--editor-fg);
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--fg);
   font-size: 13px;
   font-family: inherit;
   outline: none;
+  user-select: text;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+#search-input::placeholder {
+  color: var(--fg-faint);
 }
 #search-input:focus {
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 #search-count {
+  min-width: 58px;
+  padding: 0 4px;
   font-size: 12px;
   color: var(--fg-dim);
-  min-width: 60px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 #search-bar button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   background: transparent;
   color: var(--fg-dim);
-  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
 }
 #search-bar button:hover {
   background: var(--hover-bg);
@@ -47,47 +67,48 @@
 
 /* Search highlights in preview */
 mark.search-highlight {
-  background: rgba(255, 200, 0, 0.3);
+  background: var(--search-highlight);
   color: inherit;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 mark.search-current {
-  background: rgba(255, 150, 0, 0.7);
+  background: var(--search-current);
   color: inherit;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 /* ===== Editor Panel ===== */
+/* Line numbers and editor must share line-height and vertical padding to stay aligned */
 #editor-panel {
   flex: 1;
   display: flex;
   overflow: hidden;
+  background: var(--editor-bg);
 }
 
 #line-numbers {
-  width: 54px;
+  width: 56px;
   flex-shrink: 0;
-  padding: 14px 10px 14px 6px;
+  padding: 20px 14px 20px 0;
   text-align: right;
-  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
-  font-size: 14px;
-  line-height: 1.6;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
   overflow: hidden;
-  background: var(--linenum-bg);
   color: var(--linenum-fg);
-  border-right: 1px solid var(--border-color);
   user-select: none;
 }
 
 #editor {
   flex: 1;
-  padding: 14px 18px;
+  padding: 20px 28px 20px 10px;
   border: none;
   outline: none;
   resize: none;
-  font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 24px;
   tab-size: 4;
   white-space: pre;
   overflow-wrap: normal;
@@ -103,6 +124,5 @@ mark.search-current {
 }
 
 #editor::placeholder {
-  color: var(--fg-dim);
-  opacity: 0.6;
+  color: var(--fg-faint);
 }

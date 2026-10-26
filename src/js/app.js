@@ -6,6 +6,7 @@ const App = {
   _currentFile: null,
   _isReadingMode: false,
   _sidebarVisible: true,
+  _isMac: document.documentElement.classList.contains('platform-mac'),
 
   async init() {
     // Check Tauri API availability
@@ -51,6 +52,7 @@ const App = {
 
     // Keyboard shortcuts
     this._bindKeyboardShortcuts();
+    this._applyPlatformLabels();
 
     // Sidebar resize
     this._initResizeHandle();
@@ -68,19 +70,27 @@ const App = {
     // Drag and drop
     this._initDragDrop();
 
+    // About dialog & links
+    this._initAbout();
+    this._initExternalLinks();
+
     // Status
     document.getElementById('status-file').textContent = '就绪';
 
-    // Check if a file was passed via CLI (e.g. double-click .md in Explorer)
-    await this._loadCliFile();
+    // Open the file the OS asked us to open (e.g. double-click .md in Explorer / Finder).
+    // On macOS this also happens while running, so start listening before the first check.
+    await window.__TAURI__?.event?.listen('open-file', () => this._openPendingFile());
+    await this._openPendingFile();
   },
 
-  async _loadCliFile() {
+  async _openPendingFile() {
     try {
-      const filePath = await window.__TAURI__.core.invoke('get_cli_file_path');
+      const filePath = await window.__TAURI__.core.invoke('take_pending_file');
       if (filePath) {
-        console.log('[CLI] Opening file from args:', filePath);
+        console.log('[OpenFile] Opening file requested by OS:', filePath);
         await this._loadFile(filePath);
+        // Not loaded (user kept unsaved changes, or the read failed)
+        if (this._currentFile !== filePath) return;
 
         // Also open the parent folder in the file tree
         const parentDir = await window.__TAURI__.core.invoke('get_parent_dir', { path: filePath });
@@ -90,7 +100,7 @@ const App = {
         }
       }
     } catch (err) {
-      console.error('[CLI] Failed to load file from args:', err);
+      console.error('[OpenFile] Failed to open requested file:', err);
     }
   },
 
@@ -101,6 +111,7 @@ const App = {
     this._currentFile = null;
     Editor.setValue('', true);
     this._updateTitle();
+    FileTree.markSelected(null);
     document.getElementById('status-file').textContent = '新文件';
   },
 
@@ -114,7 +125,7 @@ const App = {
       }
     } catch (err) {
       console.error('[openFile] error:', err);
-      alert('打开文件失败: ' + JSON.stringify(err));
+      this._alert('打开文件失败: ' + JSON.stringify(err));
     }
   },
 
@@ -129,7 +140,7 @@ const App = {
       }
     } catch (err) {
       console.error('[openFolder] error:', err);
-      alert('打开文件夹失败: ' + JSON.stringify(err));
+      this._alert('打开文件夹失败: ' + JSON.stringify(err));
     }
   },
 
@@ -140,6 +151,7 @@ const App = {
       this._currentFile = filePath;
       Editor.setValue(content, true);
       this._updateTitle();
+      FileTree.markSelected(filePath);
       document.getElementById('status-file').textContent = this._fileName(filePath);
 
       // If in reading mode, update preview
@@ -148,7 +160,7 @@ const App = {
       }
     } catch (err) {
       console.error('Failed to load file:', err);
-      alert('无法打开文件: ' + err);
+      this._alert('无法打开文件: ' + err);
     }
   },
 
@@ -163,10 +175,11 @@ const App = {
       });
       Editor.markClean();
       this._updateTitle();
+      FileTree.markSelected(this._currentFile);
       document.getElementById('status-file').textContent = `已保存: ${this._fileName(this._currentFile)}`;
     } catch (err) {
       console.error('Save failed:', err);
-      alert('保存失败: ' + err);
+      this._alert('保存失败: ' + err);
     }
   },
 
@@ -182,14 +195,14 @@ const App = {
       }
     } catch (err) {
       console.error('[saveAs] error:', err);
-      alert('另存为失败: ' + JSON.stringify(err));
+      this._alert('另存为失败: ' + JSON.stringify(err));
     }
   },
 
   async _exportPdf() {
     const content = Editor.getValue();
     if (!content.trim()) {
-      alert('当前没有内容可导出');
+      this._alert('当前没有内容可导出');
       return;
     }
     try {
@@ -204,14 +217,14 @@ const App = {
       }
     } catch (err) {
       console.error('Export PDF failed:', err);
-      alert('导出 PDF 失败: ' + err);
+      this._alert('导出 PDF 失败: ' + err);
     }
   },
 
   async _exportHtml() {
     const content = Editor.getValue();
     if (!content.trim()) {
-      alert('当前没有内容可导出');
+      this._alert('当前没有内容可导出');
       return;
     }
     try {
@@ -471,21 +484,68 @@ const App = {
     nextBtn.addEventListener('click', () => { this._doSearch('next'); this._navigateToMatch(); });
   },
 
+  // ---- About ----
+
+  _initAbout() {
+    const overlay = document.getElementById('about-overlay');
+    document.getElementById('about-close').addEventListener('click', () => this._closeAbout());
+    // Clicking the backdrop (outside the card) closes it too
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) this._closeAbout();
+    });
+  },
+
+  async _showAbout() {
+    const version = await window.__TAURI__.app.getVersion().catch(() => '');
+    document.getElementById('about-version').textContent = version ? `版本 ${version}` : '';
+    document.getElementById('about-overlay').classList.remove('hidden');
+    document.getElementById('about-close').focus();
+  },
+
+  _closeAbout() {
+    document.getElementById('about-overlay').classList.add('hidden');
+  },
+
+  _isAboutOpen() {
+    return !document.getElementById('about-overlay').classList.contains('hidden');
+  },
+
+  // Links (About dialog, rendered Markdown) open in the system browser / mail app.
+  // Left alone, a click would navigate the app's own webview away and lose the editor.
+  _initExternalLinks() {
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+      e.preventDefault();
+      const href = link.getAttribute('href');
+      if (/^(https?:|mailto:)/i.test(href)) {
+        window.__TAURI__.opener.openUrl(href).catch((err) => console.error('[openUrl] error:', err));
+      }
+    });
+  },
+
   // ---- Helpers ----
 
   _updateTitle() {
     const titleEl = document.getElementById('title-text');
-    const dirty = Editor.isDirty() ? ' ●' : '';
-    const name = this._currentFile ? this._fileName(this._currentFile) : '未命名';
-    titleEl.textContent = `${name}${dirty} - ylin`;
+    titleEl.textContent = this._currentFile ? this._fileName(this._currentFile) : '未命名';
+    // Unsaved-changes dot is drawn by CSS
+    titleEl.classList.toggle('dirty', Editor.isDirty());
   },
 
   _fileName(path) {
     return path.replace(/\\/g, '/').split('/').pop();
   },
 
+  // Native dialogs: window.alert / window.confirm don't work in the macOS WebView
+  _alert(message) {
+    return window.__TAURI__.core.invoke('dialog_message', { message });
+  },
+
   async _confirmDiscard() {
-    return confirm('当前文件有未保存的修改，是否放弃更改？');
+    return window.__TAURI__.core.invoke('dialog_confirm', {
+      message: '当前文件有未保存的修改，是否放弃更改？',
+    });
   },
 
   _bindMenuActions() {
@@ -510,7 +570,7 @@ const App = {
             this._toggleReadingMode(toggle.checked);
             break;
           case 'about':
-            alert('ylin v1.0.0\n\n轻量级 Markdown 编辑器\n基于 Tauri 2 + Rust 构建\nhttps://github.com/Fuswn/ylin');
+            this._showAbout();
             break;
         }
       });
@@ -519,10 +579,22 @@ const App = {
 
   _bindKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
-      const ctrl = e.ctrlKey || e.metaKey;
+      // About dialog is modal: Escape closes it, other shortcuts are ignored
+      if (this._isAboutOpen()) {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          this._closeAbout();
+        }
+        return;
+      }
+
+      // Cmd on macOS (Ctrl+letter there is the system's text navigation), Ctrl elsewhere
+      const ctrl = this._isMac ? e.metaKey : e.ctrlKey;
+      // Shift / Caps Lock change the case of e.key, so compare letters in lowercase
+      const key = e.key.toLowerCase();
 
       // Ctrl+F: open search bar (always works)
-      if (ctrl && e.key === 'f') {
+      if (ctrl && key === 'f') {
         e.preventDefault();
         this._openSearch();
         return;
@@ -531,8 +603,9 @@ const App = {
       // Skip other shortcuts when search input is focused
       if (e.target.id === 'search-input') return;
 
-      // F3 / Shift+F3: navigate search matches from editor
-      if (e.key === 'F3' && !document.getElementById('search-bar').classList.contains('hidden')) {
+      // F3 / Shift+F3 (Cmd+G / Cmd+Shift+G on macOS): navigate search matches from editor
+      const findKey = e.key === 'F3' || (this._isMac && ctrl && key === 'g');
+      if (findKey && !document.getElementById('search-bar').classList.contains('hidden')) {
         e.preventDefault();
         if (e.shiftKey) {
           this._doSearch('prev');
@@ -550,25 +623,25 @@ const App = {
         return;
       }
 
-      if (ctrl && e.key === 'n') {
+      if (ctrl && key === 'n' && !e.shiftKey) {
         e.preventDefault();
         this._newFile();
-      } else if (ctrl && e.key === 'o' && !e.shiftKey) {
+      } else if (ctrl && key === 'o' && !e.shiftKey) {
         e.preventDefault();
         this._openFile();
-      } else if (ctrl && e.shiftKey && e.key === 'O') {
+      } else if (ctrl && e.shiftKey && key === 'o') {
         e.preventDefault();
         this._openFolder();
-      } else if (ctrl && e.key === 's' && !e.shiftKey) {
+      } else if (ctrl && key === 's' && !e.shiftKey) {
         e.preventDefault();
         this._saveFile();
-      } else if (ctrl && e.shiftKey && e.key === 'S') {
+      } else if (ctrl && e.shiftKey && key === 's') {
         e.preventDefault();
         this._saveFileAs();
-      } else if (ctrl && e.key === 'b' && !e.target.closest('#editor')) {
+      } else if (ctrl && key === 'b' && !e.shiftKey && !e.target.closest('#editor')) {
         e.preventDefault();
         this._toggleSidebar();
-      } else if (ctrl && e.key === 'p') {
+      } else if (ctrl && key === 'p' && !e.shiftKey) {
         e.preventDefault();
         const toggle = document.getElementById('reading-mode-toggle');
         toggle.checked = !toggle.checked;
@@ -576,19 +649,32 @@ const App = {
       }
 
       // Editor-specific shortcuts (only when editor is focused)
-      if (e.target.id === 'editor' && ctrl) {
-        if (e.key === 'b') {
+      if (e.target.id === 'editor' && ctrl && !e.shiftKey) {
+        if (key === 'b') {
           e.preventDefault();
           Editor.wrapSelection('**', '**');
-        } else if (e.key === 'i') {
+        } else if (key === 'i') {
           e.preventDefault();
           Editor.wrapSelection('*', '*');
-        } else if (e.key === 'k') {
+        } else if (key === 'k') {
           e.preventDefault();
           Editor.insertAtCursor('[', '](https://)', '链接文本');
         }
       }
     });
+  },
+
+  // macOS: show ⌘-style shortcuts (⌘S, ⇧⌘S) instead of Ctrl+... in menus and tooltips
+  _applyPlatformLabels() {
+    if (!this._isMac) return;
+    const toMac = (text) => text.replace(/Ctrl\+Shift\+/g, '⇧⌘').replace(/Ctrl\+/g, '⌘');
+    document.querySelectorAll('.shortcut').forEach(el => {
+      el.textContent = toMac(el.textContent);
+    });
+    document.querySelectorAll('[title*="Ctrl+"]').forEach(el => {
+      el.title = toMac(el.title);
+    });
+    document.getElementById('btn-switch-drive').title = '切换位置';
   },
 
   _initResizeHandle() {

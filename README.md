@@ -1,11 +1,15 @@
 <div align="center">
 
+<img src="src-tauri/icons/128x128@2x.png" width="128" alt="ylin" />
+
 # ylin
 
 **A fast, lightweight Markdown editor built with Tauri 2 + Rust**
 
 [English](#english) | [中文](#中文)
 
+[![Release](https://img.shields.io/github/v/release/Fuswn/ylin)](https://github.com/Fuswn/ylin/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-lightgrey)](https://github.com/Fuswn/ylin/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tauri](https://img.shields.io/badge/Tauri-2-blue?logo=tauri)](https://v2.tauri.app)
 [![Rust](https://img.shields.io/badge/Rust-1.77+-orange?logo=rust)](https://www.rust-lang.org)
@@ -18,27 +22,33 @@
 
 ## Features
 
-- **Real-time Preview** — Switch between editing and reading mode instantly
-- **Syntax Highlighting** — Code blocks rendered with highlight.js (all languages)
-- **File Tree** — Lazy-loading sidebar for browsing folders and `.md` files
-- **Three Themes** — Dark, Light, and Sepia (eye-care)
-- **Markdown Toolbar** — Quick formatting: headings, bold, italic, code, lists, links, images, tables
-- **Export** — Save as HTML or print to PDF via browser
-- **Drag & Drop** — Drop `.md` files directly into the editor
-- **Keyboard Shortcuts** — Full set of shortcuts for efficient editing
-- **Native Performance** — Rust backend with tiny memory footprint (~15MB)
-- **Cross-platform** — Windows (installer included), macOS and Linux support via Tauri
+- **Edit & Read** — Switch between the Markdown source and a typeset reading view in one keystroke
+- **Three Themes** — Dark, Light and Sepia (eye-care); the native window chrome follows the theme
+- **Native Feel** — Unified title bar and ⌘ shortcuts on macOS, native dialogs on both platforms
+- **File Tree** — Lazy-loading sidebar for folders and `.md` files, with the open file highlighted
+- **Find** — Search the source while editing or the rendered text while reading
+- **Syntax Highlighting** — Code blocks rendered with highlight.js
+- **Markdown Toolbar** — Headings, bold, italic, code, lists, links, images, tables
+- **Export** — HTML or PDF, with the same typography as the reading view
+- **Open Anywhere** — "Open With" from Explorer / Finder, or drag & drop `.md` files onto the window
+- **Native Performance** — Rust backend with a tiny memory footprint (~15MB)
+- **Cross-platform** — Windows (NSIS installer) and macOS (`.app` / `.dmg`)
 
 ## Screenshots
 
-<!-- Add screenshots here -->
-<!-- ![ylin screenshot](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/screenshot-dark.png" width="800" alt="Editing in the dark theme" />
+  <br /><br />
+  <img src="docs/screenshot-light.png" width="800" alt="Reading view in the light theme" />
+</p>
 
 ## Installation
 
 ### Download
 
-Download the latest release from the [Releases](https://github.com/Fuswn/ylin/releases) page.
+Download the latest release from the [Releases](https://github.com/Fuswn/ylin/releases) page: `*_x64-setup.exe` for Windows, `*_aarch64.dmg` for macOS.
+
+> **macOS:** the app is not notarized by Apple. If macOS blocks it on first launch, open **System Settings → Privacy & Security** and click **Open Anyway**.
 
 ### Build from Source
 
@@ -59,7 +69,10 @@ npm run dev
 npm run build
 ```
 
-The built executable will be at `src-tauri/target/release/ylin.exe` (Windows).
+Build output:
+
+- **Windows** — installer in `src-tauri/target/release/bundle/nsis/`, executable at `src-tauri/target/release/ylin.exe`
+- **macOS** — `src-tauri/target/release/bundle/macos/ylin.app`, disk image in `src-tauri/target/release/bundle/dmg/`
 
 ## Keyboard Shortcuts
 
@@ -74,17 +87,22 @@ The built executable will be at `src-tauri/target/release/ylin.exe` (Windows).
 | `Ctrl+I` | Italic (in editor) |
 | `Ctrl+K` | Insert link (in editor) |
 | `Ctrl+P` | Toggle reading mode |
+| `Ctrl+F` | Find |
+| `F3` / `Shift+F3` | Find next / previous |
 | `Tab` | Insert 4 spaces (in editor) |
+
+On macOS, use `⌘` instead of `Ctrl` (e.g. `⌘S`, `⇧⌘O`); find next / previous is also `⌘G` / `⇧⌘G`.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Framework | [Tauri 2](https://v2.tauri.app) |
-| Backend | Rust, [rfd](https://github.com/PolyMeilex/rfd) (native dialogs) |
+| Backend | Rust, [rfd](https://github.com/PolyMeilex/rfd) (native dialogs), [tauri-plugin-opener](https://v2.tauri.app/plugin/opener/) (open links) |
 | Frontend | Vanilla JavaScript (no framework, no bundler) |
 | Markdown | [markdown-it](https://github.com/markdown-it/markdown-it) |
 | Syntax Highlighting | [highlight.js](https://highlightjs.org/) |
+| App Icon | Wordmark set in [Nunito](https://fonts.google.com/specimen/Nunito) (SIL Open Font License 1.1) |
 
 ## Project Structure
 
@@ -92,13 +110,17 @@ The built executable will be at `src-tauri/target/release/ylin.exe` (Windows).
 ylin/
 ├── src/                  # Frontend (served as static files)
 │   ├── index.html
+│   ├── assets/           # Logo shown in the About dialog
 │   ├── js/               # App modules (app, editor, preview, file-tree, themes, toolbar)
 │   ├── lib/              # Vendored libs (markdown-it, highlight.js)
 │   └── styles/           # CSS (themes, editor, preview, toolbar, etc.)
 ├── src-tauri/            # Rust backend
 │   ├── src/              # Tauri commands & file operations
+│   ├── icons/            # App icons (generated); source/ holds the SVG masters + build script
 │   ├── tauri.conf.json   # Tauri configuration
+│   ├── tauri.macos.conf.json  # macOS overrides (title bar, .app/.dmg, .md file association)
 │   └── Cargo.toml
+├── docs/                 # Screenshots
 └── package.json
 ```
 
@@ -130,27 +152,33 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## 功能特性
 
-- **实时预览** — 编辑模式与阅读模式一键切换
-- **语法高亮** — 代码块使用 highlight.js 渲染（支持所有语言）
-- **文件树** — 侧边栏懒加载，浏览文件夹和 `.md` 文件
-- **三种主题** — 深色、浅色、护眼（Sepia）
-- **Markdown 工具栏** — 快速格式化：标题、粗体、斜体、代码、列表、链接、图片、表格
-- **导出功能** — 导出为 HTML 或通过浏览器打印为 PDF
-- **拖放支持** — 直接拖放 `.md` 文件到编辑器
-- **快捷键** — 完整的快捷键支持，高效编辑
+- **编辑 / 阅读** — 一键在 Markdown 源码和排版精美的阅读视图之间切换
+- **三种主题** — 深色、浅色、护眼（Sepia），系统窗口外观随主题切换
+- **原生体验** — macOS 上采用一体化标题栏和 ⌘ 快捷键，两个平台都使用系统原生对话框
+- **文件树** — 侧边栏懒加载，浏览文件夹和 `.md` 文件，高亮当前打开的文件
+- **查找** — 编辑时搜索源码，阅读时搜索渲染后的文字
+- **语法高亮** — 代码块使用 highlight.js 渲染
+- **Markdown 工具栏** — 标题、粗体、斜体、代码、列表、链接、图片、表格
+- **导出功能** — 导出为 HTML 或 PDF，排版与阅读视图一致
+- **随处打开** — 在资源管理器 / 访达中用"打开方式"打开，或把 `.md` 文件拖进窗口
 - **原生性能** — Rust 后端，极小内存占用（约 15MB）
-- **跨平台** — 支持 Windows（含安装程序）、macOS 和 Linux
+- **跨平台** — 支持 Windows（NSIS 安装包）和 macOS（`.app` / `.dmg`）
 
 ## 截图
 
-<!-- 在此添加截图 -->
-<!-- ![ylin 截图](docs/screenshot.png) -->
+<p align="center">
+  <img src="docs/screenshot-dark.png" width="800" alt="深色主题下编辑" />
+  <br /><br />
+  <img src="docs/screenshot-light.png" width="800" alt="浅色主题下的阅读视图" />
+</p>
 
 ## 安装
 
 ### 下载
 
-从 [Releases](https://github.com/Fuswn/ylin/releases) 页面下载最新版本。
+从 [Releases](https://github.com/Fuswn/ylin/releases) 页面下载最新版本：Windows 下载 `*_x64-setup.exe`，macOS 下载 `*_aarch64.dmg`。
+
+> **macOS：** 应用未经过 Apple 公证。首次打开如被系统拦截，请前往「系统设置 → 隐私与安全性」，点击「仍要打开」。
 
 ### 从源码构建
 
@@ -171,7 +199,10 @@ npm run dev
 npm run build
 ```
 
-构建产物位于 `src-tauri/target/release/ylin.exe`（Windows）。
+构建产物：
+
+- **Windows** — 安装包位于 `src-tauri/target/release/bundle/nsis/`，可执行文件为 `src-tauri/target/release/ylin.exe`
+- **macOS** — `src-tauri/target/release/bundle/macos/ylin.app`，磁盘映像位于 `src-tauri/target/release/bundle/dmg/`
 
 ## 快捷键
 
@@ -186,17 +217,22 @@ npm run build
 | `Ctrl+I` | 斜体（编辑器内） |
 | `Ctrl+K` | 插入链接（编辑器内） |
 | `Ctrl+P` | 切换阅读模式 |
+| `Ctrl+F` | 查找 |
+| `F3` / `Shift+F3` | 查找下一个 / 上一个 |
 | `Tab` | 插入 4 个空格（编辑器内） |
+
+macOS 上用 `⌘` 代替 `Ctrl`（如 `⌘S`、`⇧⌘O`），查找下一个 / 上一个也可以用 `⌘G` / `⇧⌘G`。
 
 ## 技术栈
 
 | 层级 | 技术 |
 |------|------|
 | 框架 | [Tauri 2](https://v2.tauri.app) |
-| 后端 | Rust、[rfd](https://github.com/PolyMeilex/rfd)（原生对话框） |
+| 后端 | Rust、[rfd](https://github.com/PolyMeilex/rfd)（原生对话框）、[tauri-plugin-opener](https://v2.tauri.app/plugin/opener/)（打开链接） |
 | 前端 | 原生 JavaScript（无框架、无打包工具） |
 | Markdown 解析 | [markdown-it](https://github.com/markdown-it/markdown-it) |
 | 语法高亮 | [highlight.js](https://highlightjs.org/) |
+| 应用图标 | 字标使用 [Nunito](https://fonts.google.com/specimen/Nunito) 字体（SIL Open Font License 1.1） |
 
 ## 项目结构
 
@@ -204,13 +240,17 @@ npm run build
 ylin/
 ├── src/                  # 前端（直接作为静态文件提供）
 │   ├── index.html
+│   ├── assets/           # 关于面板中的 Logo
 │   ├── js/               # 应用模块（app、editor、preview、file-tree、themes、toolbar）
 │   ├── lib/              # 第三方库（markdown-it、highlight.js）
 │   └── styles/           # 样式（主题、编辑器、预览、工具栏等）
 ├── src-tauri/            # Rust 后端
 │   ├── src/              # Tauri 命令与文件操作
+│   ├── icons/            # 应用图标（生成产物）；source/ 下是 SVG 源文件和生成脚本
 │   ├── tauri.conf.json   # Tauri 配置
+│   ├── tauri.macos.conf.json  # macOS 专属配置（标题栏、.app/.dmg、.md 文件关联）
 │   └── Cargo.toml
+├── docs/                 # 截图
 └── package.json
 ```
 
