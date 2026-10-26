@@ -131,6 +131,7 @@ Rust + Tauri 2.10.3，通过 `#[tauri::command]` 暴露给前端：
 - **设计**：读作 Markdown 的 `# ylin`。左侧深色"源码"区放蓝色 `#`，右侧纸色"渲染"区放 "ylin" 标题、两行正文和蓝色光标。字标用 Nunito Bold（SIL OFL 1.1），已转成路径，SVG 里没有 `<text>`，不依赖字体。配色：深色区 `#3B3E48→#22242B`，纸面 `#FFFDF8→#F1E8D8`，`#` 和光标 `#5E95FF`，字标 `#2E2A24`，正文线 `#B3A690`
 - **源文件**（`src-tauri/icons/source/`）：`icon-mac*.svg` 按苹果网格绘制（824px 主体 + 投影），生成 `icon.icns` 和 `icon.png`（`tauri dev` 时的程序坞图标）；`icon-full*.svg` 铺满画布、无投影，生成 `icon.ico`、其它 PNG、Store logo 和关于面板的 `src/assets/logo.png`。`*-small.svg`（`# y`）用于 40px 及以下，那么小时 "ylin" 已经看不清
 - **重新生成**：改完 SVG 后执行 `python3 src-tauri/icons/source/build_icons.py`（需要 macOS + Google Chrome）。**不要用 `npx tauri icon`**，它只认一张源图，会丢掉 Mac / Windows 两种版式和小尺寸版，还会额外生成移动端图标
+- **Windows 安装程序**：setup.exe 的图标要在 `tauri.conf.json` 的 `bundle.windows.nsis.installerIcon` 中指定（指向 `icons/icon.ico`），否则会显示 NSIS 默认图标（v1.1.0 及之前的安装程序都是默认图标）。卸载程序仍是 NSIS 默认图标：`uninstallerIcon` 字段要 Tauri 2.12 以上才支持，当前 tauri-build 2.5 遇到这个字段会直接编译失败
 - 换图标后如果程序坞 / 访达还显示旧图标，是 macOS 图标缓存的问题，执行 `killall Dock` 即可
 
 ## Git Workflow
